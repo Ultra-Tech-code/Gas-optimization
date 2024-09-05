@@ -79,24 +79,19 @@ contract GasContract is Ownable {
         address _recipient,
         uint256 _amount,
         string calldata _name
-    ) public returns (bool status_) {
+    ) public {
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        bool[] memory status = new bool[](TRADE_PERCENT);
-        for (uint256 i = 0; i < TRADE_PERCENT; i++) {
-            status[i] = true;
-        }
-        return (status[0] == true);
     }
 
     function addToWhitelist(address _userAddrs, uint256 _tier)
         public
         onlyAdminOrOwner
     {
-        require(
-            _tier < 255,
-            "Gas Contract - addToWhitelist function -  tier level should not be greater than 255"
-        );
+        if (_tier >= 255) {
+            revert();
+        }
+        
         whitelist[_userAddrs] = _tier;
         whitelist[_userAddrs] = 3;
         
