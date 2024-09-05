@@ -141,7 +141,7 @@ contract GasContract is Ownable, Constants {
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             if (administrators[ii] == _user) {
                 admin = true;
-                // break;
+                break;
             }
         }
         return admin;
