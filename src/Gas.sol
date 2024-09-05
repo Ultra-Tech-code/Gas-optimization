@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0; 
+pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 
@@ -48,7 +48,7 @@ contract GasContract is Ownable, Constants {
     }
     uint256 wasLastOdd = 1;
     mapping(address => uint256) public isOddWhitelistUser;
-    
+
     struct ImportantStruct {
         uint256 amount;
         uint256 valueA; // max 3 digits
@@ -110,41 +110,22 @@ contract GasContract is Ownable, Constants {
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
 
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (_admins[ii] != address(0)) {
-                administrators[ii] = _admins[ii];
-                if (_admins[ii] == contractOwner) {
-                    balances[contractOwner] = totalSupply;
-                } 
-                //else {
-                //    //balances[_admins[ii]] = 0;
-                //}
-                //if (_admins[ii] == contractOwner) {
-                //    emit supplyChanged(_admins[ii], totalSupply);
-                //} else if (_admins[ii] != contractOwner) {
-                //    emit supplyChanged(_admins[ii], 0);
-                //}
-            }
-        }
+        // loop unrolling. useless.
+        administrators[0] = _admins[0];
+        administrators[1] = _admins[1];
+        administrators[2] = _admins[2];
+        administrators[3] = _admins[3];
+        administrators[4] = _admins[4];
+
+        balances[contractOwner] = totalSupply;
     }
 
-    //function getPaymentHistory()
-    //    public
-    //    payable
-    //    returns (History[] memory paymentHistory_)
-    //{
-    //    return paymentHistory;
-    //}
-
     function checkForAdmin(address _user) public view returns (bool admin_) {
-        bool admin = false;
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (administrators[ii] == _user) {
-                admin = true;
-                break;
-            }
-        }
-        return admin;
+        return (administrators[0] == _user ||
+            administrators[1] == _user ||
+            administrators[2] == _user ||
+            administrators[3] == _user ||
+            administrators[4] == _user);
     }
 
     function balanceOf(address _user) public view returns (uint256 balance_) {
@@ -161,7 +142,6 @@ contract GasContract is Ownable, Constants {
     //    }
     //    return mode;
     //}
-
 
     //function addHistory(address _updateAddress, bool _tradeMode)
     //    public
@@ -263,12 +243,10 @@ contract GasContract is Ownable, Constants {
     //    }
     //}
 
-
-
-    function addToWhitelist(address _userAddrs, uint256 _tier)
-        public
-        onlyAdminOrOwner
-    {
+    function addToWhitelist(
+        address _userAddrs,
+        uint256 _tier
+    ) public onlyAdminOrOwner {
         require(
             _tier < 255,
             "Gas Contract - addToWhitelist function -  tier level should not be greater than 255"
@@ -302,8 +280,15 @@ contract GasContract is Ownable, Constants {
         uint256 _amount
     ) public checkIfWhiteListed(msg.sender) {
         address senderOfTx = msg.sender;
-        whiteListStruct[senderOfTx] = ImportantStruct(_amount, 0, 0, 0, true, msg.sender);
-        
+        whiteListStruct[senderOfTx] = ImportantStruct(
+            _amount,
+            0,
+            0,
+            0,
+            true,
+            msg.sender
+        );
+
         require(
             balances[senderOfTx] >= _amount,
             "Gas Contract - whiteTransfers function - Sender has insufficient Balance"
@@ -316,20 +301,24 @@ contract GasContract is Ownable, Constants {
         balances[_recipient] += _amount;
         balances[senderOfTx] += whitelist[senderOfTx];
         balances[_recipient] -= whitelist[senderOfTx];
-        
+
         emit WhiteListTransfer(_recipient);
     }
 
-    function getPaymentStatus(address sender) public view returns (bool, uint256) {
-        return (whiteListStruct[sender].paymentStatus, whiteListStruct[sender].amount);
+    function getPaymentStatus(
+        address sender
+    ) public view returns (bool, uint256) {
+        return (
+            whiteListStruct[sender].paymentStatus,
+            whiteListStruct[sender].amount
+        );
     }
 
     receive() external payable {
         payable(msg.sender).transfer(msg.value);
     }
 
-
     fallback() external payable {
-         payable(msg.sender).transfer(msg.value);
+        payable(msg.sender).transfer(msg.value);
     }
 }
