@@ -12,12 +12,8 @@ contract GasContract is Ownable {
     mapping(address => Payment[]) public payments; // NEED
     mapping(address => uint256) public whitelist; // NEED
     address[5] public administrators; // NEED 
-    enum PaymentType {
-        BasicPayment
-    }
 
     struct Payment {
-        PaymentType paymentType;
         uint256 paymentID;
         bool adminUpdated;
         string recipientName; // max 8 characters
@@ -39,18 +35,9 @@ contract GasContract is Ownable {
     event AddedToWhitelist(address userAddress, uint256 tier);
 
     modifier onlyAdminOrOwner() {
-        address senderOfTx = msg.sender;
-        if (checkForAdmin(senderOfTx)) {
-            _;
-        } else {
-            revert(
-                "Error in Gas contract - onlyAdminOrOwner modifier : revert happened because the originator of the transaction was not the admin, and furthermore he wasn't the owner of the contract, so he cannot run this function"
-            );
+        if (!checkForAdmin(msg.sender)) {
+            revert();
         }
-    }
-
-    modifier checkIfWhiteListed(address sender) {
-        address senderOfTx = msg.sender;
         _;
     }
 
@@ -69,19 +56,8 @@ contract GasContract is Ownable {
         totalSupply = _totalSupply;
 
         for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (_admins[ii] != address(0)) {
-                administrators[ii] = _admins[ii];
-                if (_admins[ii] == contractOwner) {
-                    balances[contractOwner] = totalSupply;
-                } else {
-                    balances[_admins[ii]] = 0;
-                }
-                if (_admins[ii] == contractOwner) {
-                    emit supplyChanged(_admins[ii], totalSupply);
-                } else if (_admins[ii] != contractOwner) {
-                    emit supplyChanged(_admins[ii], 0);
-                }
-            }
+            administrators[ii] = _admins[ii];
+            balances[contractOwner] = totalSupply;
         }
     }
 
@@ -95,9 +71,8 @@ contract GasContract is Ownable {
         return admin;
     }
 
-    function balanceOf(address _user) public view returns (uint256 balance_) {
-        uint256 balance = balances[_user];
-        return balance;
+    function balanceOf(address _user) public view returns (uint256 balance) {
+        balance = balances[_user];
     }
     
     function transfer(
@@ -105,19 +80,8 @@ contract GasContract is Ownable {
         uint256 _amount,
         string calldata _name
     ) public returns (bool status_) {
-        address senderOfTx = msg.sender;
-        balances[senderOfTx] -= _amount;
+        balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
-        Payment memory payment;
-        payment.admin = address(0);
-        payment.adminUpdated = false;
-        payment.paymentType = PaymentType.BasicPayment;
-        payment.recipient = _recipient;
-        payment.amount = _amount;
-        payment.recipientName = _name;
-        payment.paymentID = ++paymentCounter;
-        payments[senderOfTx].push(payment);
         bool[] memory status = new bool[](TRADE_PERCENT);
         for (uint256 i = 0; i < TRADE_PERCENT; i++) {
             status[i] = true;
@@ -142,7 +106,7 @@ contract GasContract is Ownable {
     function whiteTransfer(
         address _recipient,
         uint256 _amount
-    ) public checkIfWhiteListed(msg.sender) {
+    ) public {
         address senderOfTx = msg.sender;
         whiteListStruct[senderOfTx] = ImportantStruct(_amount, 0, 0, 0, true, msg.sender);
     
