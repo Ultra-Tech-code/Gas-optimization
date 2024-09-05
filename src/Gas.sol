@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0; 
 
-import "./Ownable.sol";
+pragma solidity ^0.8.26; 
 
-contract GasContract is Ownable {
-    uint256 public constant totalSupply = 1000000000; // cannot be updated
+contract GasContract {
     mapping(address => uint256) public balances;
-    mapping(address => uint256) public whitelist; // NEED
-    address[5] public administrators; // NEED 
+    mapping(address => uint256) public whitelist;
+    address[5] public administrators;
     mapping(address => uint256) public whiteListStruct;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
@@ -21,26 +19,12 @@ contract GasContract is Ownable {
     }
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            administrators[ii] = _admins[ii];
-            balances[msg.sender] = _totalSupply;
+        balances[msg.sender] = _totalSupply;
+        for (uint256 i; i < 5; ++i) {
+            administrators[i] = _admins[i];
         }
     }
 
-    function checkForAdmin(address _user) public view returns (bool admin_) {
-        bool admin = false;
-        for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (administrators[ii] == _user) {
-                admin = true;
-            }
-        }
-        return admin;
-    }
-
-    function balanceOf(address _user) public view returns (uint256 balance) {
-        balance = balances[_user];
-    }
-    
     function transfer(
         address _recipient,
         uint256 _amount,
@@ -68,7 +52,6 @@ contract GasContract is Ownable {
         uint256 _amount
     ) public {
         whiteListStruct[msg.sender] = _amount;
-    
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         balances[msg.sender] += whitelist[msg.sender];
@@ -77,7 +60,19 @@ contract GasContract is Ownable {
         emit WhiteListTransfer(_recipient);
     }
 
-    function getPaymentStatus(address sender) public view returns (bool, uint256) {
-        return (true, whiteListStruct[sender]);
+    function getPaymentStatus(address sender) external view returns (bool status, uint256 value) {
+        (status, value) = (true, whiteListStruct[sender]);
+    }
+
+    function checkForAdmin(address _user) public view returns (bool isAdmin) {
+        for (uint256 i; i < 5; ++i) {
+            if (administrators[i] == _user) {
+                isAdmin = true;
+            }
+        }
+    }
+
+    function balanceOf(address _user) public view returns (uint256 balance) {
+        balance = balances[_user];
     }
 }
