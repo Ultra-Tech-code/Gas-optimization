@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-    struct ImportantStruct {
-        uint256 amount;
-        bool paymentStatus;
-    }
 contract GasContract{
-    address public contractOwner;
     address[5] public administrators;
     uint256 wasLastOdd = 1;
     mapping(address => uint256) public whitelist;
     mapping(address => uint256) public balances;
     mapping(address => uint256) public isOddWhitelistUser;
-    mapping(address => ImportantStruct) public whiteListStruct;
+    mapping(address => uint) public whiteListStruct;
     event AddedToWhitelist(address userAddress, uint256 tier);
 
-    modifier onlyAdminOrOwner() {
-        if (msg.sender == contractOwner || checkForAdmin(msg.sender)) {
+    modifier onlyAdmin() {
+        if (checkForAdmin(msg.sender)) {
             _;
         }  else {
             revert();
@@ -38,7 +33,6 @@ contract GasContract{
     event WhiteListTransfer(address indexed);
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        contractOwner = msg.sender; // this can be removed and tests would pass so the contractOwner can be entirely removed, but under different tests it would fail - so I kept it
 
         for (uint256 ii = 0; ii < 5; ii++) {
             if (_admins[ii] != address(0)) {
@@ -85,7 +79,7 @@ contract GasContract{
 
     function addToWhitelist(address _userAddrs, uint256 _tier)
         public
-        onlyAdminOrOwner
+        onlyAdmin
     {
         require(
             _tier < 255
@@ -111,7 +105,7 @@ contract GasContract{
         address _recipient,
         uint256 _amount
     ) public checkIfWhiteListed() {
-        whiteListStruct[msg.sender] = ImportantStruct(_amount, true);
+        whiteListStruct[msg.sender] = _amount;
         
         require(
             balances[msg.sender] >= _amount
@@ -125,7 +119,7 @@ contract GasContract{
     }
 
     function getPaymentStatus(address sender) public view returns (bool, uint256) {
-        return (whiteListStruct[sender].paymentStatus, whiteListStruct[sender].amount);
+        return (whiteListStruct[sender]!=0, whiteListStruct[sender]);
     }
 
 }
