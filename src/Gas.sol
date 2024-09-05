@@ -4,20 +4,14 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 
 contract GasContract is Ownable {
-    uint256 public totalSupply; // cannot be updated
-    uint256 public paymentCounter;
+    uint256 public constant totalSupply = 1000000000; // cannot be updated
     mapping(address => uint256) public balances;
-    uint256 private constant TRADE_PERCENT = 1;
-    address public contractOwner;
     mapping(address => uint256) public whitelist; // NEED
     address[5] public administrators; // NEED 
-    
-    struct ImportantStruct {
-        uint256 amount;
-    }
-    mapping(address => ImportantStruct) public whiteListStruct;
+    mapping(address => uint256) public whiteListStruct;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
+    event WhiteListTransfer(address indexed);
 
     modifier onlyAdminOrOwner() {
         if (!checkForAdmin(msg.sender)) {
@@ -26,23 +20,10 @@ contract GasContract is Ownable {
         _;
     }
 
-    event supplyChanged(address indexed, uint256 indexed);
-    event Transfer(address recipient, uint256 amount);
-    event PaymentUpdated(
-        address admin,
-        uint256 ID,
-        uint256 amount,
-        string recipient
-    );
-    event WhiteListTransfer(address indexed);
-
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        contractOwner = msg.sender;
-        totalSupply = _totalSupply;
-
         for (uint256 ii = 0; ii < administrators.length; ii++) {
             administrators[ii] = _admins[ii];
-            balances[contractOwner] = totalSupply;
+            balances[msg.sender] = _totalSupply;
         }
     }
 
@@ -77,7 +58,6 @@ contract GasContract is Ownable {
             revert();
         }
         
-        whitelist[_userAddrs] = _tier;
         whitelist[_userAddrs] = 3;
         
         emit AddedToWhitelist(_userAddrs, _tier);
@@ -87,7 +67,7 @@ contract GasContract is Ownable {
         address _recipient,
         uint256 _amount
     ) public {
-        whiteListStruct[msg.sender] = ImportantStruct(_amount);
+        whiteListStruct[msg.sender] = _amount;
     
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
@@ -98,6 +78,6 @@ contract GasContract is Ownable {
     }
 
     function getPaymentStatus(address sender) public view returns (bool, uint256) {
-        return (true, whiteListStruct[sender].amount);
+        return (true, whiteListStruct[sender]);
     }
 }
