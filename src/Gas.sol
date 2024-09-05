@@ -9,26 +9,11 @@ contract GasContract is Ownable {
     mapping(address => uint256) public balances;
     uint256 private constant TRADE_PERCENT = 1;
     address public contractOwner;
-    mapping(address => Payment[]) public payments; // NEED
     mapping(address => uint256) public whitelist; // NEED
     address[5] public administrators; // NEED 
-
-    struct Payment {
-        uint256 paymentID;
-        bool adminUpdated;
-        string recipientName; // max 8 characters
-        address recipient;
-        address admin; // administrators address
-        uint256 amount;
-    }
     
     struct ImportantStruct {
         uint256 amount;
-        uint256 valueA; // max 3 digits
-        uint256 bigValue;
-        uint256 valueB; // max 3 digits
-        bool paymentStatus;
-        address sender;
     }
     mapping(address => ImportantStruct) public whiteListStruct;
 
@@ -102,18 +87,17 @@ contract GasContract is Ownable {
         address _recipient,
         uint256 _amount
     ) public {
-        address senderOfTx = msg.sender;
-        whiteListStruct[senderOfTx] = ImportantStruct(_amount, 0, 0, 0, true, msg.sender);
+        whiteListStruct[msg.sender] = ImportantStruct(_amount);
     
-        balances[senderOfTx] -= _amount;
+        balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        balances[senderOfTx] += whitelist[senderOfTx];
-        balances[_recipient] -= whitelist[senderOfTx];
+        balances[msg.sender] += whitelist[msg.sender];
+        balances[_recipient] -= whitelist[msg.sender];
         
         emit WhiteListTransfer(_recipient);
     }
 
     function getPaymentStatus(address sender) public view returns (bool, uint256) {
-        return (whiteListStruct[sender].paymentStatus, whiteListStruct[sender].amount);
+        return (true, whiteListStruct[sender].amount);
     }
 }
