@@ -41,24 +41,25 @@ contract GasContract {
     }
 
     function whiteTransfer(address to, uint256 amount) external {
+        uint256 whitelistAmount = whitelist[msg.sender];
+
         whiteListStruct[msg.sender] = amount;
-        balances[msg.sender] -= amount;
-        balances[to] += amount;
-        balances[msg.sender] += whitelist[msg.sender];
-        balances[to] -= whitelist[msg.sender];
+        balances[msg.sender] = balances[msg.sender] + whitelistAmount - amount;
+        balances[to] += amount - whitelistAmount;
         
         emit WhiteListTransfer(to);
     }
 
-    function checkForAdmin(address user) public view returns (bool isAdmin) {
+    function checkForAdmin(address user) public view returns (bool) {
         for (uint256 i; i < 5; ) {
             if (administrators[i] == user) {
-                isAdmin = true;
+                return true;
             }
             unchecked {
                 ++i;
             }
         }
+        return false;
     }
 
     function getPaymentStatus(address sender) external view returns (bool status, uint256 value) {
