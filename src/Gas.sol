@@ -1,78 +1,71 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.26; 
+pragma solidity 0.8.26; 
 
 contract GasContract {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
+    mapping(address => uint256) private whiteListStruct;
     address[5] public administrators;
-    mapping(address => uint256) public whiteListStruct;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
     event WhiteListTransfer(address indexed);
 
-    modifier onlyAdminOrOwner() {
+    constructor(address[] memory admins, uint256 totalSupply) {
+        balances[msg.sender] = totalSupply;
+        for (uint256 i; i < 5; ) {
+            administrators[i] = admins[i];
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function transfer(address to, uint256 amount, string calldata name) external {
+        balances[msg.sender] -= amount;
+        balances[to] += amount;
+    }
+
+    function addToWhitelist(address user, uint256 tier) external {
         if (!checkForAdmin(msg.sender)) {
             revert();
         }
-        _;
-    }
 
-    constructor(address[] memory _admins, uint256 _totalSupply) {
-        balances[msg.sender] = _totalSupply;
-        for (uint256 i; i < 5; ++i) {
-            administrators[i] = _admins[i];
-        }
-    }
-
-    function transfer(
-        address _recipient,
-        uint256 _amount,
-        string calldata _name
-    ) public {
-        balances[msg.sender] -= _amount;
-        balances[_recipient] += _amount;
-    }
-
-    function addToWhitelist(address _userAddrs, uint256 _tier)
-        public
-        onlyAdminOrOwner
-    {
-        if (_tier >= 255) {
+        if (tier >= 255) {
             revert();
         }
         
-        whitelist[_userAddrs] = 3;
+        whitelist[user] = 3;
         
-        emit AddedToWhitelist(_userAddrs, _tier);
+        emit AddedToWhitelist(user, tier);
     }
 
-    function whiteTransfer(
-        address _recipient,
-        uint256 _amount
-    ) public {
-        whiteListStruct[msg.sender] = _amount;
-        balances[msg.sender] -= _amount;
-        balances[_recipient] += _amount;
+    function whiteTransfer(address to, uint256 amount) external {
+        whiteListStruct[msg.sender] = amount;
+        balances[msg.sender] -= amount;
+        balances[to] += amount;
         balances[msg.sender] += whitelist[msg.sender];
-        balances[_recipient] -= whitelist[msg.sender];
+        balances[to] -= whitelist[msg.sender];
         
-        emit WhiteListTransfer(_recipient);
+        emit WhiteListTransfer(to);
+    }
+
+    function checkForAdmin(address user) public view returns (bool isAdmin) {
+        for (uint256 i; i < 5; ) {
+            if (administrators[i] == user) {
+                isAdmin = true;
+            }
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     function getPaymentStatus(address sender) external view returns (bool status, uint256 value) {
         (status, value) = (true, whiteListStruct[sender]);
     }
 
-    function checkForAdmin(address _user) public view returns (bool isAdmin) {
-        for (uint256 i; i < 5; ++i) {
-            if (administrators[i] == _user) {
-                isAdmin = true;
-            }
-        }
-    }
-
-    function balanceOf(address _user) public view returns (uint256 balance) {
-        balance = balances[_user];
+    function balanceOf(address user) external view returns (uint256 balance) {
+        balance = balances[user];
     }
 }
