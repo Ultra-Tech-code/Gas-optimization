@@ -13,11 +13,8 @@ contract GasContract {
 
     constructor(address[] memory admins, uint256 totalSupply) {
         balances[msg.sender] = totalSupply;
-        for (uint256 i; i < 5; ) {
-            administrators[i] = admins[i];
-            unchecked {
-                ++i;
-            }
+        assembly {
+            for {let i := 0} lt(i, 5) {i := add(i, 1)} {sstore(add(i, 3), mload(add(0xe0, mul(i, 0x20)))) }
         }
     }
 
