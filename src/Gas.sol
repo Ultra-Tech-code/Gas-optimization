@@ -47,16 +47,16 @@ contract GasContract {
         emit WhiteListTransfer(to);
     }
 
-    function checkForAdmin(address user) public view returns (bool) {
-        for (uint256 i; i < 5; ) {
-            if (administrators[i] == user) {
-                return true;
-            }
-            unchecked {
-                ++i;
+    function checkForAdmin(address user) public view returns (bool isAdmin) {
+        assembly {
+            isAdmin := false
+            for {let i := 0} lt(i, 5) {i := add(i, 1)} {
+                if eq(sload(add(i, 3)), user) {
+                    isAdmin := true
+                    break
+                }
             }
         }
-        return false;
     }
 
     function getPaymentStatus(address sender) external view returns (bool status, uint256 value) {
